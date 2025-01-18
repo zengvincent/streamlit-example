@@ -1,38 +1,58 @@
-from collections import namedtuple
-import altair as alt
-import math
-import pandas as pd
 import streamlit as st
+import pyodbc
 
-"""
-# Welcome to Streamlit!
+# SQL Server 数据库连接配置
+def get_db_connection():
+    conn_str = (
+        "DRIVER={SQL Server};"
+        "SERVER=2.tcp.nas.cpolar.cn:13957;"  # 替换为你的服务器名称
+        "DATABASE=test;"  # 替换为你的数据库名称
+        "UID=sa;"  # 替换为你的数据库用户名
+        "PWD=suphie8639;"  # 替换为你的数据库密码
+    )
+    return pyodbc.connect(conn_str)
 
-Edit `/streamlit_app.py` to customize this app to your heart's desire :heart:
+# 验证用户名和密码
+def authenticate(username, password):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM users WHERE username = ? AND password = ?", (username, password))
+    user = cursor.fetchone()
+    cursor.close()
+    conn.close()
+    return user is not None
 
-If you have any questions, checkout our [documentation](https://docs.streamlit.io) and [community
-forums](https://discuss.streamlit.io).
+# 主应用逻辑
+def main():
+    st.title("秀衫衫查看成本表登录界面")
 
-In the meantime, below is an example of what you can do with just a few lines of code:
-"""
+    # 初始化 session_state
+    if "logged_in" not in st.session_state:
+        st.session_state.logged_in = False
 
+    # 如果未登录，显示登录表单
+    if not st.session_state.logged_in:
+        username = st.text_input("用户名")
+        password = st.text_input("密码", type="password")
 
-with st.echo(code_location='below'):
-    total_points = st.slider("测试1", 1, 5000, 2000)
-    num_turns = st.slider("Number of turns in spiral", 1, 100, 9)
+        if st.button("登录"):
+            if authenticate(username, password):
+                st.session_state.logged_in = True
+                st.session_state.username = username
+                st.success("登录成功！")
+            else:
+                st.error("用户名或密码错误")
 
-    Point = namedtuple('Point', 'x y')
-    data = []
+    # 如果已登录，显示数据界面
+    if st.session_state.logged_in:
+        st.title(f"欢迎, {st.session_state.username}!")
+        st.write("这是数据界面。")
 
-    points_per_turn = total_points / num_turns
+        if st.button("退出"):
+            st.session_state.logged_in = False
+            st.session_state.username = None
+            st.rerun()  # 使用 st.rerun() 刷新页面
 
-    for curr_point_num in range(total_points):
-        curr_turn, i = divmod(curr_point_num, points_per_turn)
-        angle = (curr_turn + 1) * 2 * math.pi * i / points_per_turn
-        radius = curr_point_num / total_points
-        x = radius * math.cos(angle)
-        y = radius * math.sin(angle)
-        data.append(Point(x, y))
-
-    st.altair_chart(alt.Chart(pd.DataFrame(data), height=500, width=500)
-        .mark_circle(color='#0068c9', opacity=0.5)
-        .encode(x='x:Q', y='y:Q'))
+# 运行应用
+if __name__ == "__main__":
+    main()
