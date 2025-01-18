@@ -5,7 +5,7 @@ import pyodbc
 def get_db_connection():
     conn_str = (
         "DRIVER={SQL Server};"
-        "SERVER=2.tcp.nas.cpolar.cn:13957;"  # 替换为你的服务器名称
+        "SERVER=1.tcp.nas.cpolar.cn:10264;"  # 替换为你的服务器名称
         "DATABASE=test;"  # 替换为你的数据库名称
         "UID=sa;"  # 替换为你的数据库用户名
         "PWD=suphie8639;"  # 替换为你的数据库密码
